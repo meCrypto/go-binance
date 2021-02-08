@@ -94,6 +94,21 @@ func WsMarkPriceServe(symbol string, handler WsMarkPriceHandler, errHandler ErrH
 	return wsServe(cfg, wsHandler, errHandler)
 }
 
+func WsMarkPriceServe1s(symbol string, handler WsMarkPriceHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+	endpoint := fmt.Sprintf("%s/%s@markPrice@1s", getWsEndpoint(), strings.ToLower(symbol))
+	cfg := newWsConfig(endpoint)
+	wsHandler := func(message []byte) {
+		event := new(WsMarkPriceEvent)
+		err := json.Unmarshal(message, &event)
+		if err != nil {
+			errHandler(err)
+			return
+		}
+		handler(event)
+	}
+	return wsServe(cfg, wsHandler, errHandler)
+}
+
 // WsAllMarkPriceEvent defines an array of websocket markPriceUpdate events.
 type WsAllMarkPriceEvent []*WsMarkPriceEvent
 
@@ -404,6 +419,18 @@ type WsDepthHandler func(event *WsDepthEvent)
 // WsPartialDepthServe serve websocket partial depth handler.
 func WsPartialDepthServe(symbol string, levels int, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
 	endpoint := fmt.Sprintf("%s/%s@depth%d", getWsEndpoint(), strings.ToLower(symbol), levels)
+	cfg := newWsConfig(endpoint)
+	return wsDepthServe(cfg, handler, errHandler)
+}
+
+func WsPartialDepthServe100Ms(symbol string, levels int, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+	endpoint := fmt.Sprintf("%s/%s@depth%d@100ms", getWsEndpoint(), strings.ToLower(symbol), levels)
+	cfg := newWsConfig(endpoint)
+	return wsDepthServe(cfg, handler, errHandler)
+}
+
+func WsPartialDepthServe500Ms(symbol string, levels int, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+	endpoint := fmt.Sprintf("%s/%s@depth%d@500ms", getWsEndpoint(), strings.ToLower(symbol), levels)
 	cfg := newWsConfig(endpoint)
 	return wsDepthServe(cfg, handler, errHandler)
 }
